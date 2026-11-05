@@ -1,0 +1,2760 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<!-- generate a ToC -->
+<?rfc symrefs="yes"?>
+<!-- use symbolic references tags, i.e, [RFC2119] instead of [1] -->
+<?rfc sortrefs="yes" ?>
+<!-- sort the reference entries alphabetically -->
+<?rfc compact="no" ?>
+<!-- do not start each main section on a new page -->
+<?rfc subcompact="no" ?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" category="std" consensus="true" docName="draft-ietf-dtn-adm-yang-08" ipr="trust200902" submissionType="IETF" symRefs="true" tocInclude="true" version="3" xml:lang="en">
+  <front>
+    <title abbrev="DTNMA ADM YANG">DTNMA Application Data Model (ADM) YANG Syntax</title>
+    <seriesInfo name="Internet-Draft" value="draft-ietf-dtn-adm-yang-08"/>
+    <author fullname="Edward J. Birrane, III" initials="E.J." surname="Birrane">
+      <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+      <address>
+        <postal>
+          <street>11100 Johns Hopkins Rd.</street>
+          <city>Laurel</city>
+          <region>MD</region>
+          <code>20723</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 443 778 7423</phone>
+        <email>Edward.Birrane@jhuapl.edu</email>
+      </address>
+    </author>
+    <author fullname="Brian Sipos" initials="B." surname="Sipos">
+      <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+      <address>
+        <email>brian.sipos+ietf@gmail.com</email>
+      </address>
+    </author>
+    <author fullname="Justin Ethier" initials="J." surname="Ethier">
+      <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+      <address>
+        <email>Justin.Ethier@jhuapl.edu</email>
+      </address>
+    </author>
+    <author fullname="Per Andersson" initials="P." surname="Andersson">
+      <organization>Ionio Systems</organization>
+      <address>
+        <email>per.ietf@ionio.se</email>
+      </address>
+    </author>
+    <date/>
+    <area>Transport</area>
+    <workgroup>Delay-Tolerant Networking</workgroup>
+    <keyword>DTN</keyword>
+    <keyword>Network Management</keyword>
+    <keyword>Autonomy</keyword>
+    <abstract>
+      <t>
+This document defines a concrete syntax for encoding a Delay-Tolerant Networking Management Architecture (DTNMA) Application Data Model (ADM) using the syntax and modular structure, but not the full data model, of YANG.
+Extensions to YANG are defined to capture the specifics needed to define DTNMA Application Management Model (AMM) objects and to use the Application Resource Identifier (ARI) data-value syntax.
+      </t>
+    </abstract>
+  </front>
+  <middle>
+    <section>
+      <name>Introduction</name>
+      <t>
+The Delay-Tolerant Networking Management Architecture (DTNMA) of <xref target="RFC9675"/> defines a concept for remote management in a challenged network environment, and the Application Management Model (AMM) of <xref target="I-D.ietf-dtn-amm"/> defines a meta-model for the structure of object types and literal-value types used in DTNMA and separates static definitions of Application Data Models (ADMs) from dynamic Operational Data Models (ODMs).
+      </t>
+      <t>
+This document defines a text representation of an ADM using the types and structures of the AMM combined with the syntax and processing semantics of YANG modules <xref target="RFC7950"/>, while using AMM-specific extensions for object and data modeling.
+With this representation, individual applications can capture their static management information in module files and make use of existing YANG processing and module-level logic (<em>e.g.</em>, file naming, revision history, imports).
+      </t>
+      <t>
+Because the YANG syntax and data modeling language are closely coupled, there is no pre-existing example of using YANG for its syntax (and its module infrastructure) while using different domain-specific language (DSL) of extensions for data modeling.
+Separating the syntax from the data modeling is similar in concept to making use of ASN.1 syntax of <xref target="X.680"/> without using the SMIv2 data modeling language <xref target="RFC2578"/>, which is how unrelated things like certificate profile of X.509 <xref target="RFC5280"/> use ASN.1 module syntax.
+      </t>
+      <t>
+One way of thinking of this is that the ADM modules use a syntax that has "YANG characteristics" but does not make use of all YANG tooling or infrastructure and do not interoperate with existing YANG modules or their contained data models.
+      </t>
+      <section>
+        <name>Scope</name>
+        <t>
+This document defines a specific syntax for representing individual revisions of individual ADMs as text files.
+        </t>
+        <t>
+It does not define a representation for the runtime objects and literal values modeled by an ADM or ODM. 
+Encodings of values within the AMM are defined in the Application Resource Identifier (ARI) specification <xref target="I-D.ietf-dtn-ari"/>.
+While the Agent ADM provides an introspection capability to indicate <em>which </em> objects are present in an ODM, encodings of the runtime state of those objects are outside of the scope of this document.
+        </t>
+        <t>
+It is not required that the YANG encoding be used for transmission of ADM information over the wire in the context of a network deployment.
+Since the AMM is designed to allow for multiple encodings, the expression of ADMs in YANG syntax is intended to support translation to other encodings without loss of information.
+        </t>
+      </section>
+      <section>
+        <name>Terminology</name>
+        <t>
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119"/>.
+        </t>
+        <t>
+The terms "Application Data Model", "Application Resource Identifier", "Operational Data Model", "Externally Defined Data", "Variable", "Constant", "Control", "Literal", "Macro", "Namespace", "Operator", "Report", "Report Template", "Rule", "State-Based Rule", "Table", and "Time-Based Rule" are used without modification from the definitions provided in <xref target="I-D.ietf-dtn-amm"/>.
+        </t>
+        <t>
+The terms "Comment", "Keyword", and "Module" are used without modification from the definitions provided in <xref target="RFC7950"/>.
+        </t>
+        <t>
+Additional terms defined in this document are as follows.
+        </t>
+        <dl>
+          <dt>ADM Module:</dt>
+          <dd>
+The specific use of a YANG module to represent a DTNMA ADM.
+          </dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="sec-yang-syntax">
+      <name>ADM Module Syntax</name>
+      <t>
+Some aspects of this ADM module profile restrict the allowable definitions to conform with <xref section="4" target="I-D.ietf-dtn-amm"/> and by doing so make YANG modules defining ADMs incompatible with YANG modules intended for NETCONF, RESTCONF, or other applications.
+Because of this, YANG modules defining ADMs <bcp14>SHALL</bcp14> be managed separately from the "YANG Module Names" registry of <xref target="IANA-YANG"/>.
+See the ADM registry defined in <xref section="9.3" target="I-D.ietf-dtn-ari"/> for registration of ADM modules.
+For the remainder of this document, a YANG module defining an ADM will be referred to as an "ADM module" and a YANG module for any other purpose will be referred to as an "Other Module" to differentiate it.
+      </t>
+      <t>
+After explanation of extensions in <xref target="sec-yang-ext"/>, the following minimal ADM module will be expanded upon for further examples.
+      </t>
+      <figure>
+        <name>Minimal Example ADM Module</name>
+        <sourcecode markers="false" name="example-adm.yang" src="example-adm.yang" type="yang"/>
+      </figure>
+    </section>
+    <section anchor="sec-adm-module">
+      <name>ADM Module Contents</name>
+      <t>
+An ADM module is identified, as defined in <xref target="sec-yang-proc-reuse"/>, by the module "namespace" having an "ari" scheme.
+Within an ADM module, this profile makes restrictions in <xref target="sec-yang-proc-restrict"/> which are formalized in the following table of allowed module substatements.
+This table is adapted from <xref section="7.1" target="RFC7950"/>.
+      </t>
+      <t>
+The AMM object types of <xref section="3.4" target="I-D.ietf-dtn-amm"/> are expressed in an ADM module as follows:
+      </t>
+      <table>
+        <name>AMM Object Types in an ADM Module</name>
+        <thead>
+          <tr>
+            <th>AMM Object Type</th>
+            <th>ADM Module Expression</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>EDD</td>
+            <td>native <tt>leaf</tt> statement</td>
+          </tr>
+          <tr>
+            <td>TYPEDEF</td>
+            <td>native <tt>typedef</tt> statement</td>
+          </tr>
+          <tr>
+            <td>All other object types</td>
+            <td>AMM extension statement (<tt>amm:ident</tt>, <tt>amm:const</tt>, <tt>amm:ctrl</tt>, <tt>amm:oper</tt>, <tt>amm:sbr</tt>, <tt>amm:tbr</tt>, <tt>amm:var</tt>)</td>
+          </tr>
+        </tbody>
+      </table>
+      <t>
+In each case the argument to the statement is the name of the object instance, and in ARI syntax the object is always referenced by its AMM object type.
+For example, the EDD object named <tt>tx_count</tt> in <xref target="sec-yang-ext-edd"/> is expressed as a <tt>leaf</tt> statement in the ADM module and is referenced in text form as the module-relative path <tt>./EDD/tx_count</tt>.
+      </t>
+      <t>
+The "yang-version" of all ADM modules conforming to this document <bcp14>SHALL</bcp14> be "1.1".
+Later versions of YANG syntax could introduce incompatible changes and will need to be examined for consistency with the ADM module use.
+      </t>
+      <table>
+        <name>ADM <tt>module</tt> Substatements</name>
+        <thead>
+          <tr>
+            <th>Substatement</th>
+            <th>Cardinality</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>yang-version</td>
+            <td>1</td>
+            <td>
+              <xref section="7.1.2" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>namespace</td>
+            <td>1</td>
+            <td>
+              <xref section="7.1.3" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>prefix</td>
+            <td>1</td>
+            <td>
+              <xref section="7.1.4" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>include</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.1.6" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>import</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.1.5" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>status</td>
+            <td>0..1</td>
+            <td>
+              <xref section="7.21.2" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>reference</td>
+            <td>0..1</td>
+            <td>
+              <xref section="7.21.4" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>organization</td>
+            <td>0..1</td>
+            <td>
+              <xref section="7.1.7" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>description</td>
+            <td>0..1</td>
+            <td>
+              <xref section="7.21.3" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>revision</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.1.9" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>extension</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.19" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>feature</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.20.1" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>deviation</td>
+            <td>0..n</td>
+            <td>
+              <xref section="7.20.3" target="RFC7950"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:enum</td>
+            <td>1</td>
+            <td>
+              <xref target="sec-yang-ext-enum"/>
+            </td>
+          </tr>
+          <tr>
+            <td>typedef (TYPEDEF object)</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-typedef"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:const</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-const"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:ctrl</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-ctrl"/>
+            </td>
+          </tr>
+          <tr>
+            <td>leaf (EDD object)</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-edd"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:oper</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-oper"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:sbr</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-sbr"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:tbr</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-tbr"/>
+            </td>
+          </tr>
+          <tr>
+            <td>amm:var</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-var"/>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="sec-yang-proc">
+      <name>Inherited YANG Module Processing</name>
+      <t>
+The benefit of using the pre-existing YANG syntax is to take advantage of both tools that process YANG modules as well as some of the syntax and module-level semantics provided by YANG.
+        </t>
+      <section anchor="sec-yang-proc-reuse">
+        <name>Direct Reuse</name>
+        <t>
+The following statements and behaviors of YANG are usable within an ADM with no modification:
+        </t>
+        <dl>
+          <dt>File Layout:</dt>
+          <dd>
+The existing file naming defined in <xref section="5.2" target="RFC7950"/> is unchanged for ADM modules.
+Because ADM modules occupy a separate ecosystem than Other Modules, their file stores <bcp14>SHALL</bcp14> be kept separate.
+          </dd>
+          <dt>Modules and Submodules:</dt>
+          <dd>
+The existing concepts and syntax of modules and submodules defined in <xref section="5.1" target="RFC7950"/> is unchanged for ADM modules.
+Because ADM modules occupy a separate ecosystem than Other Modules, there will not be any cross-imports between the two ecosystems.
+There is no harm in including an ADM module in an Other Module store, but it will have no data definitions usable with NETCONF, RESTCONF, <em>etc.</em>
+          </dd>
+          <dt>Module Naming:</dt>
+          <dd>
+            <t>
+The existing module naming convention and recommendation from <xref section="4.1" target="RFC8407"/> is strengthened to a requirement for ADM modules.
+All ADM modules <bcp14>SHALL</bcp14> be named by concatenating from the ADM namespace reference: the organization ID, a dash "-", and the model ID.
+            </t>
+          </dd>
+          <dt>Module Importing:</dt>
+          <dd>
+The existing concept and syntax of importing a module namespace, to reference objects in another module, defined in <xref section="5.1.1" target="RFC7950"/> is unchanged for ADM modules.
+Because the import includes a specific revision, the ARI references to objects in that imported module do not need any ADM revision information.
+          </dd>
+          <dt>Module Prefix:</dt>
+          <dd>
+The existing concept and syntax of the "prefix" statement defined in <xref section="7.1.4" target="RFC7950"/> is unchanged for ADM modules.
+The only aspect of ADM modules that the prefix applies to, however, are references to feature names from "if-feature" statements.
+          </dd>
+          <dt>Module Namespace:</dt>
+          <dd>
+            <t>
+Although an ADM module has no use for an XML namespace (as defined in <xref section="5.3" target="RFC7950"/>), the "namespace" statement is used to provide an explicit ARI namespace reference (see <xref section="3.4" target="I-D.ietf-dtn-ari"/>).
+For ADM modules, the "namespace" statement argument <bcp14>SHALL</bcp14> be the text-form ARI referencing the ADM itself.
+            </t>
+            <t>
+For example, the ADM "example-adm" will have a namespace of <tt>ari://example/adm/</tt> which is valid YANG but does not conform to the guidelines of <xref section="4.9" target="RFC8407"/>.
+            </t>
+          </dd>
+          <dt>Module Organization:</dt>
+          <dd>
+The existing concept and use of the "organization" statement defined in <xref section="7.1.7" target="RFC7950"/> is unchanged for ADM modules.
+The organization statement is augmented for ADM modules by adding an <tt>amm:enum</tt> substatement as defined in <xref target="sec-yang-ext-enum"/>.
+          </dd>
+          <dt>Name Resolution:</dt>
+          <dd>
+The existing name resolution logic described in <xref section="5.4" target="RFC7950"/> is unchanged for ADM modules.
+Because ADM modules are a flat object namespace, the complexity of namespaces is significantly simplified compared to Other Modules.
+          </dd>
+          <dt>Features:</dt>
+          <dd>
+The existing definition and use of features as described in <xref section="5.6.2" target="RFC7950"/> is unchanged for ADM modules.
+This includes the declaration of a "feature" statement within an ADM module and the conditioning of the presence of an object on an "if-feature" statement.
+This also treats feature identifiers as module-prefix-qualified references.
+          </dd>
+          <dt>Documentation Statements:</dt>
+          <dd>
+The existing <tt>status</tt>, <tt>description</tt>, and <tt>reference</tt> statements are unchanged from their definitions in Sections <relref displayFormat="bare" section="7.21.2" target="RFC7950"/>, <relref displayFormat="bare" section="7.21.3" target="RFC7950"/>, and <relref section="7.21.4" target="RFC7950"/> respectively.
+          </dd>
+          <dt>Reusable Groups:</dt>
+          <dd>
+The existing <tt>grouping</tt> and <tt>uses</tt> statements and logic described in <xref section="4.2.6" target="RFC7950"/> is unchanged for ADM modules generally.
+Because ADM modules are a flat object namespace, the utility of reuse in an ADM module is limited to the contents of object definitions as shown in <xref target="tab-grouping-substmts"/>.
+See <xref target="sec-auth-consid"/> for author considerations about the distinction between semantic type groupings and TYPEDEF instances.
+          </dd>
+        </dl>
+        <table anchor="tab-grouping-substmts">
+          <name>Allowed <tt>grouping</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..*</td>
+            </tr>
+            <tr>
+              <td>amm:operand</td>
+              <td>0..*</td>
+            </tr>
+            <tr>
+              <td>amm:result</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:seq</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section anchor="sec-yang-proc-restrict">
+        <name>Restrictions and Exclusions</name>
+        <t>
+Because of the different interpretation of data definitions for an ADM module, the following restrictions are used to limit pre-existing valid YANG syntax within an ADM module:
+          </t>
+        <dl>
+          <dt>Built-In Types:</dt>
+          <dd>
+Because ADM modules have data that ultimately follows the AMM value model (see <xref section="3.1" target="I-D.ietf-dtn-amm"/>), the built-in types listed in <xref section="4.2.4" target="RFC7950"/>, the "type" statement of <xref section="7.4" target="RFC7950"/>, and the "typedef" statement of <xref section="7.3" target="RFC7950"/> are used to express the AMM semantic types and TYPEDEF objects defined in this document.
+The normative mapping from AMM built-in value types to YANG types is defined in <xref target="sec-yang-types"/>.
+YANG built-in types, "type", and "typedef" statements <bcp14>SHALL</bcp14> only be used within the semantic type statements (<xref target="sec-yang-ext-semtype"/>) and the TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) as defined by this document, and <bcp14>SHALL NOT</bcp14> be used to model data directly the way Other Modules do.
+             </dd>
+          <dt>Data Node Structure:</dt>
+          <dd>
+As defined in this document, there is no direct deterministic mapping between the complex, hierarchical, named data nodes of YANG and unnamed AMM values.
+An ADM module <bcp14>SHALL NOT</bcp14> contain any YANG data node statements other than "leaf", among them "container", "leaf-list", "list", "anydata", "anyxml", and "choice".
+The "leaf" statement <bcp14>SHALL</bcp14> be used solely with option "config false" to represent EDD objects as defined in <xref target="sec-yang-ext-edd"/>.
+             </dd>
+          <dt>Data Presence Versus Value:</dt>
+          <dd>
+Rather than being an extrinsic notion of presence or absence, AMM objects can use type unions with the <tt>NULL</tt> type to indicate optional values and AMM values can use the <tt>null</tt> value to represent that state.
+In the case of formal parameters, the use of a "default" statement is used to indicate behavior when an actual parameter is <tt>undefined</tt>.
+In any case, the AMM value is always present when defined in the structure of an AMM object.
+An ADM module <bcp14>SHALL NOT</bcp14> contain any "mandatory" statements.
+            </dd>
+          <dt>Nested Object Definitions:</dt>
+          <dd>
+Because of the flat structure of an ADM, the nesting allowed and encouraged by <xref section="5.5" target="RFC7950"/>, are not allowed to be present in an ADM module.
+An ADM module <bcp14>SHALL</bcp14> contain all AMM object definitions at the top (module) level.
+            </dd>
+          <dt>XPath Expressions:</dt>
+          <dd>
+The ADM module makes no use of XML or XPath in its definitions or logical constraints, so the behaviors described in <xref section="6.4" target="RFC7950"/> and in statements containing XPath expressions ("must", "when", "path", "augment") do not apply to ADM modules.
+All references in an ADM module take the form of an ARI.
+            </dd>
+          <dt>NETCONF Operations:</dt>
+          <dd>
+Because an ADM module will not be used for modeling in NETCONF and related protocols, the statements associated with NETCONF operations (notably "action", "notification", "rpc") <bcp14>SHALL NOT</bcp14> be present in an ADM module.
+            </dd>
+          <dt>Extending Models:</dt>
+          <dd>
+Because the transport of AMM values takes the form of an ARI, which does not include identity information the way XML elements do, the concept of extending an existing Legacy model by another model as described in <xref section="4.2.8" target="RFC7950"/> cannot apply to an ADM.
+The model extension "augment" statement <bcp14>SHALL NOT</bcp14> be present in an ADM module.
+            </dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="sec-yang-types">
+      <name>Built-In Types, TYPEDEFs, and Semantic Types</name>
+      <t>
+As discussed in <xref target="sec-yang-proc-restrict"/>, the AMM value model of <xref section="3.1" target="I-D.ietf-dtn-amm"/> is expressed in an ADM module using the native YANG type system of <xref target="RFC7950"/>.
+AMM values do not have explicit data-node identifiers and are represented as ARIs at runtime, but the static typing of those values within an ADM uses the named types of the <tt>ietf-amm</tt> module with "type" statements and "typedef" statements as defined in this document.
+         </t>
+      <t>
+Each AMM built-in value type (see <xref section="3.1" target="I-D.ietf-dtn-amm"/>) maps to a YANG type as shown in <xref target="tab-amm-yang-types"/>.
+Each AMM built-in value type is represented as a named type in the <tt>ietf-amm</tt> module and referenced by its module-qualified name (for example, <tt>UINT</tt> as <tt>amm:uint</tt>).
+Each named type wraps the corresponding YANG base type (for example, <tt>uint32</tt>), as shown in <xref target="tab-amm-yang-types"/>.
+         </t>
+      <table anchor="tab-amm-yang-types">
+        <name>AMM Built-In Value Type to YANG Type Mapping</name>
+        <thead>
+          <tr>
+            <th>AMM Built-In Type</th>
+            <th>YANG Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><tt>NULL</tt></td>
+            <td><tt>amm:null</tt> (<tt>empty</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>BOOL</tt></td>
+            <td><tt>amm:bool</tt> (<tt>boolean</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>BYTE</tt></td>
+            <td><tt>amm:byte</tt> (<tt>uint8</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>INT</tt></td>
+            <td><tt>amm:int</tt> (<tt>int32</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>UINT</tt></td>
+            <td><tt>amm:uint</tt> (<tt>uint32</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>VAST</tt></td>
+            <td><tt>amm:vast</tt> (<tt>int64</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>UVAST</tt></td>
+            <td><tt>amm:uvast</tt> (<tt>uint64</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>REAL32</tt></td>
+            <td><tt>amm:real32</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+          <tr>
+            <td><tt>REAL64</tt></td>
+            <td><tt>amm:real64</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+          <tr>
+            <td><tt>TEXTSTR</tt></td>
+            <td><tt>amm:textstr</tt> (<tt>string</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>BYTESTR</tt></td>
+            <td><tt>amm:bytestr</tt> (<tt>binary</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>TP</tt></td>
+            <td><tt>amm:tp</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+          <tr>
+            <td><tt>TD</tt></td>
+            <td><tt>amm:td</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+          <tr>
+            <td><tt>LABEL</tt></td>
+            <td><tt>amm:label</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+          <tr>
+            <td><tt>CBOR</tt></td>
+            <td><tt>amm:cbor</tt> (<tt>binary</tt>)</td>
+          </tr>
+          <tr>
+            <td><tt>ARITYPE</tt></td>
+            <td><tt>amm:aritype</tt> (<tt>string</tt>, ARI text form)</td>
+          </tr>
+           <tr>
+             <td><tt>OBJPAT</tt></td>
+             <td><tt>amm:objpat</tt> (<tt>string</tt> with a <tt>pattern</tt>)</td>
+           </tr>
+           <tr>
+             <td><tt>LITERAL</tt></td>
+             <td><tt>string</tt> (ARI text form of any literal value)</td>
+           </tr>
+           <tr>
+             <td><tt>OBJECT</tt></td>
+             <td><tt>string</tt> (text form of an ARI referencing an object)</td>
+           </tr>
+           <tr>
+             <td><tt>NAMESPACE</tt></td>
+             <td><tt>string</tt> (text form of an ARI referencing a namespace)</td>
+           </tr>
+         </tbody>
+      </table>
+       <t>
+ The AMM built-in types mapped to named types derived from <tt>string</tt> in <xref target="tab-amm-yang-types"/> hold the ARI text form of the value (<xref target="I-D.ietf-dtn-ari"/>).
+ When an AMM value is present in the syntax of a YANG module, it is present only as that text form, without the <tt>ari:</tt> scheme prefix but in many cases <em>with</em> its ARI literal type segment.
+ For example, a <tt>REAL64</tt> value of 3.14 is written as the untyped literal <tt>3.14</tt>.
+ A <tt>TP</tt> value is written as its RFC 3339 date-time or fractional-seconds text form (<em>e.g.</em>, <tt>/TP/20230102T030405Z</tt>), and a <tt>TD</tt> value as its RFC 3339 duration or fractional-seconds text form (<em>e.g.</em>, <tt>/TD/PT5S</tt>).
+          </t>
+      <t>
+The <tt>TD</tt> type represents a time delta (an offset between two time points), not an absolute point in time.
+         </t>
+      <t>
+The value-class types <tt>LITERAL</tt>, <tt>OBJECT</tt>, and <tt>NAMESPACE</tt> of <xref section="3.1" target="I-D.ietf-dtn-amm"/> are classes of values, and are mapped in <xref target="tab-amm-yang-types"/>.
+For each of the DTNMA object types (<tt>IDENT</tt>, <tt>CONST</tt>, <tt>CTRL</tt>, <tt>EDD</tt>, <tt>OPER</tt>, <tt>SBR</tt>, <tt>TBR</tt>, <tt>VAR</tt>, and <tt>TYPEDEF</tt>) there is a corresponding object reference type of the same name.
+A value of an object reference type or of the <tt>NAMESPACE</tt> type is the text form of the ARI of the referenced object or namespace (<xref target="I-D.ietf-dtn-ari"/>), and is expressed as the <tt>string</tt> type.
+The referenced object type is intrinsic to the ARI value itself.
+Where an ADM author needs to constrain the referenced object type or namespace, a <tt>pattern</tt> substatement on the <tt>string</tt> type may be applied.
+This document does not define such patterns.
+         </t>
+      <t>
+Named types, including an AMM built-in type expressed as a named type and a TYPEDEF object, are referenced within ADM modules using the module-qualified name form <tt>&lt;prefix&gt;:&lt;name&gt;</tt>, in the same manner as any other reference to an object defined in another imported module (see <xref section="5.1.1" target="RFC7950"/>).
+A TYPEDEF is a way for an ADM to apply a name and descriptive metadata to a specific semantic type (see <xref section="3.3" target="I-D.ietf-dtn-amm"/>).
+The TYPEDEF is a top-level ADM object (see <xref section="3.4.2" target="I-D.ietf-dtn-amm"/>) with the syntax in <xref target="sec-yang-ext-typedef"/>.
+Because they are ADM objects, TYPEDEFs can be referenced by name when necessary, as in the example below.
+         </t>
+      <sourcecode type="yang">
+ type adm-a:mytype;
+ </sourcecode>
+      <t>
+Except for the case of a simple "type" with no restrictions or annotations, anywhere one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> occurs in an object definition can be considered as an "anonymous" unnamed semantic type.
+The behavior in those cases is identical to a TYPEDEF just without a name associated with the semantic type.
+         </t>
+    </section>
+    <section anchor="sec-yang-ext">
+      <name>ADM Module Extensions</name>
+      <t>
+In order to provide syntax necessary for AMM Object instance definitions this document defines, via the <xref target="sec-yang-ietf-amm">DTNMA ADM</xref>, the following extensions for ADM modules.
+      </t>
+      <section anchor="sec-yang-ext-enum">
+        <name>The <tt>amm:enum</tt> Statement</name>
+        <t>
+This statement is used to apply an integer enumeration to an ADM module, organization, or AMM object.
+Integer enumeration enables the compressed form of ARI discussed in <xref section="3.1" target="I-D.ietf-dtn-ari"/>.
+The argument to this statement is an integer in the YANG range <tt>0..2^31-1</tt> to fit within the ARI syntax.
+There are no substatements defined in this profile.
+        </t>
+        <t>
+All well-known registered ADMs <bcp14>SHALL</bcp14> contain an <tt>amm:enum</tt> substatement within the top <tt>module</tt> statement and its <tt>organization</tt> statement.
+The value in the organization enumeration <bcp14>SHALL</bcp14> agree with the registration in the "Namespace Organizations" registry of <xref target="IANA-DTNMA"/>.
+        </t>
+      </section>
+      <section anchor="sec-yang-ext-semtype">
+        <name>Semantic Type Statements</name>
+        <t>
+The statements within this section enable the various semantic type classes, as explained in <xref section="3.3" target="I-D.ietf-dtn-amm"/>.
+They are all used as substatements within one of the AMM object definition statements, sometimes directly (<em>e.g.</em>, for CONST or EDD typing) and sometimes indirectly (<em>e.g.</em>, for parameter or operand typing), but always as a choice between the need for one of the semantic type statements.
+The Named Type Use (<tt>type</tt>) and Type Union (<tt>union</tt>) semantic types are expressed with the native YANG statements of <xref target="RFC7950"/>, while the container and sequence semantic types (such as <tt>amm:ulist</tt> and <tt>amm:dlist</tt>) are expressed with the AMM extension statements defined in this document.
+           </t>
+        <section anchor="sec-yang-ext-type">
+          <name>The <tt>type</tt> Statement (Named Type Use)</name>
+          <t>
+This statement creates a Named Type Use semantic type (see <xref section="3.3.1" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+It is the native YANG "type" statement of <xref target="RFC7950"/>.
+The argument to this statement is a YANG type, which is a module-qualified <tt>&lt;prefix&gt;:&lt;name&gt;</tt> reference to a named type: an AMM built-in value type of the <tt>ietf-amm</tt> module (as mapped in <xref target="sec-yang-types"/>) or a TYPEDEF or other named type.
+             </t>
+          <t>
+The substatements under this are the native YANG type substatements (see <xref section="7.4.1" target="RFC7950"/>), such as <tt>range</tt>, <tt>length</tt>, and <tt>pattern</tt>, together with the AMM type-annotation extension statements defined in this document.
+Because this is the native "type" statement, it does not carry the <tt>description</tt>, <tt>reference</tt>, or <tt>units</tt> statements; those are carried by the enclosing TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) or EDD object (<xref target="sec-yang-ext-edd"/>) when the semantic type is named.
+For compatibility reasons, the arguments used for <tt>pattern</tt> statements <bcp14>SHALL</bcp14> be limited to the constructs compatible with I-Regexp of <xref target="RFC9485"/>.
+             </t>
+          <table>
+            <name><tt>type</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+                <th>Valid for These Types</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th colspan="3">Inherited from base YANG</th>
+              </tr>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+                <td>any</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+                <td>any</td>
+              </tr>
+              <tr>
+                <td>units</td>
+                <td>0..1</td>
+                <td>any</td>
+              </tr>
+              <tr>
+                <th colspan="3">Display annotations</th>
+              </tr>
+              <tr>
+                <td>amm:display-hint</td>
+                <td>0..1</td>
+                <td>any</td>
+              </tr>
+              <tr>
+                <td>amm:int-labels</td>
+                <td>0..1</td>
+                <td>Any <tt>INTEGER</tt> type</td>
+              </tr>
+              <tr>
+                <th colspan="3">Value constraints</th>
+              </tr>
+              <tr>
+                <td>range</td>
+                <td>0..1</td>
+                <td>Any <tt>INTEGER</tt> or <tt>FLOAT</tt>, with appropriate quantized values in the argument</td>
+              </tr>
+              <tr>
+                <td>length</td>
+                <td>0..1</td>
+                <td>For <tt>TEXTSTR</tt> as number of characters. For <tt>BYTESTR</tt> or <tt>CBOR</tt> as number of bytes.</td>
+              </tr>
+              <tr>
+                <td>pattern</td>
+                <td>0..1</td>
+                <td>For <tt>TEXTSTR</tt> only</td>
+              </tr>
+              <tr>
+                <td>amm:cddl</td>
+                <td>0..1</td>
+                <td>For <tt>CBOR</tt> only</td>
+              </tr>
+              <tr>
+                <td>base</td>
+                <td>0..*</td>
+                <td>For <tt>IDENT</tt> only</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "type" statement are below, some as simple use and some as restriction.
+             </t>
+          <sourcecode type="yang">
+ type amm:uint;
+ type amm:uint {
+   description
+     "constrained number";
+   units "meter";
+   range "3..10";
+ }
+ type amm:textstr {
+   description
+     "constrained text size";
+   length "10..100";
+ }
+ </sourcecode>
+          <section anchor="sec-yang-ext-display-hint">
+            <name>The <tt>amm:display-hint</tt> Statement</name>
+            <t>
+This statement provides general purpose tailoring of how AMM values are intended to be displayed.
+The argument to this statement is the text form of the ARI referencing an IDENT object derived from the root <tt>ari://ietf-amm/IDENT/display-hint</tt> object.
+              </t>
+            <t>
+The description of any leaf IDENT derived from this root object <bcp14>SHALL</bcp14> contain specific requirements for how the display hint affects text form of any associated values, including restrictions on which built-in types the hint can be used with.
+              </t>
+          </section>
+          <section anchor="sec-yang-ext-int-labels">
+            <name>The <tt>amm:int-labels</tt> Statement</name>
+            <t>
+This statement provides human-friendly labels for enumerated values or bit positions within an integer type.
+There is no argument to this statement.
+              </t>
+            <t>
+The substatements under this are either "enum" or "bit" statements from YANG, each of which define a single value or bit name within the type.
+A single "amm:int-labels" <bcp14>SHALL NOT</bcp14> use a mix of "enum" and "bit" substatements as this would result in ambiguous interpretation.
+When present, each "enum" statement <bcp14>SHALL</bcp14> contain an explicit and unique "value" substatement.
+When present, each "bit" statement <bcp14>SHALL</bcp14> contain an explicit and unique "position" substatement.
+              </t>
+            <table>
+              <name><tt>amm:int-labels</tt> Substatements</name>
+              <thead>
+                <tr>
+                  <th>Substatement</th>
+                  <th>Cardinality</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>enum</td>
+                  <td>0..n</td>
+                </tr>
+                <tr>
+                  <td>bit</td>
+                  <td>0..n</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section anchor="sec-yang-ext-cddl">
+            <name>The <tt>amm:cddl</tt> Statement</name>
+            <t>
+This statement provides annotation of allowed content within a <tt>CBOR</tt> type byte string in the form of a Concise Data Definition Language (CDDL) fragment.
+The argument to this statement is a CDDL fragment in accordance with <xref target="RFC8610"/>, escaped as necessary to conform to the YANG syntax.
+              </t>
+            <t>
+There are no substatements within this statement.
+              </t>
+          </section>
+          <section anchor="sec-yang-ext-base-use">
+            <name>The <tt>base</tt> Statement (for IDENT types)</name>
+            <t>
+When the type is an <xref target="sec-yang-ext-ident">IDENT</xref>, this statement is the native YANG <tt>base</tt> substatement (see <xref section="7.4.1" target="RFC7950"/>) within the <tt>identity</tt> definition, which constrains the identity to be derived from a particular base identity.
+The argument to this statement is the module-qualified <tt>&lt;prefix&gt;:&lt;name&gt;</tt> of the required base identity.
+The <tt>identityref</tt> base type of <xref target="RFC7950"/> is a separate YANG data type and is not part of the AMM/ADM mapping.
+               </t>
+            <t>
+There are no substatements within this statement.
+               </t>
+          </section>
+        </section>
+        <section anchor="sec-yang-ext-ulist">
+          <name>The <tt>amm:ulist</tt> Statement</name>
+          <t>
+This statement creates a Uniform List semantic type (see <xref section="3.3.2" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+There is no argument to this statement.
+            </t>
+          <table>
+            <name><tt>amm:ulist</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>min-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>max-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>uses</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "amm:ulist" statement are below, some as simple use and some as restriction.
+            </t>
+          <sourcecode type="yang">
+amm:ulist {
+  type amm:uint;
+}
+amm:ulist {
+  type amm:uint {
+    range "3..10";
+  }
+  min-elements 2;
+  max-elements 10;
+}
+</sourcecode>
+        </section>
+        <section anchor="sec-yang-ext-dlist">
+          <name>The <tt>amm:dlist</tt> Statement</name>
+          <t>
+This statement creates a Diverse List semantic type (see <xref section="3.3.3" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+There is no argument to this statement.
+            </t>
+          <t>
+Each of the type use substatements defines a single element within the AC, except for the <tt>amm:seq</tt> which defines a sequence of type-matching elements within the AC (rather than as a sub-AC).
+            </t>
+          <table>
+            <name><tt>amm:dlist</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One or more of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:seq</td>
+                <td>0..n</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "amm:dlist" statement are below, one as simple structure and the other as a complex sequence.
+            </t>
+          <sourcecode type="yang">
+amm:dlist {
+  // each "type" substatement is one element of the AC
+  type amm:uint;
+  type amm:uint;
+}
+amm:dlist {
+  // first AC element is text
+  type amm:textstr;
+  // remaining 2-10 element are int
+  amm:seq {
+    type amm:int;
+    min-elements 2;
+    max-elements 10;
+  }
+}
+</sourcecode>
+        </section>
+        <section anchor="sec-yang-ext-umap">
+          <name>The <tt>amm:umap</tt> Statement</name>
+          <t>
+This statement creates a Uniform Map semantic type (see <xref section="3.3.4" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+There is no argument to this statement.
+            </t>
+          <t>
+When present, each of the <tt>amm:keys</tt> and <tt>amm:values</tt> substatements constrains the associated aspect of all map items to the specific type; when absent the aspect is left unconstrained.
+Keep in mind that AM keys are always constrained to untyped literal values and the use of <tt>amm:keys</tt> can only narrow this constraint.
+            </t>
+          <table>
+            <name><tt>amm:umap</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:keys</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:values</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <name><tt>amm:keys</tt> and <tt>amm:values</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>uses</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "amm:umap" statement are below, some as simple use and some as restriction.
+            </t>
+          <sourcecode type="yang">
+amm:umap {
+  description
+    "restrict only keys";
+  amm:keys {
+    type amm:uint;
+  }
+}
+amm:umap {
+  description
+    "Map uint to text values.";
+  amm:keys {
+    type amm:uint;
+  }
+  amm:values {
+    type amm:textstr;
+  }
+}
+</sourcecode>
+        </section>
+        <section anchor="sec-yang-ext-tblt">
+          <name>The <tt>amm:tblt</tt> Statement</name>
+          <t>
+This statement creates a Table Template semantic type (see <xref section="3.3.5" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+There is no argument to this statement.
+            </t>
+          <t>
+The substatements are a combination of "amm:column" statements defining table structure and "amm:key", "amm:unique", "min-elements", "max-elements" statements defining constraints on the table rows.
+            </t>
+          <table>
+            <name><tt>amm:tblt</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>min-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>max-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:key</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:unique</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:column</td>
+                <td>0..n</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "amm:tblt" statement are below.
+            </t>
+          <sourcecode type="yang">
+amm:tblt {
+  amm:column first {
+    type amm:uint;
+  }
+  amm:column second {
+    type amm:textstr;
+  }
+  amm:key "first";
+}
+</sourcecode>
+          <section>
+            <name>The <tt>amm:column</tt> Statement</name>
+            <t>
+This statement defines the name and type of each column of a table.
+The argument to this statement is an identifier for the column.
+All columns <bcp14>SHALL</bcp14> have unique names within the same parent table.
+            </t>
+            <t>
+The primary substatement under this are one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> which defines the type for values in this column.
+If present, any "if-feature" substatement within a column indicates that an Agent which does not implement the named feature(s) will: always use the undefined value in this column when producing tables associated with the parent template and/or always ignore (but not modify) given values in this column when processing these tables.
+            </t>
+            <table>
+              <name><tt>amm:column</tt> Substatements</name>
+              <thead>
+                <tr>
+                  <th>Substatement</th>
+                  <th>Cardinality</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>if-feature</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>description</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>reference</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>uses</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <th colspan="2">One of the semantic type:</th>
+                </tr>
+                <tr>
+                  <td>type</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>amm:ulist</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>amm:dlist</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>amm:umap</td>
+                  <td>0..1</td>
+                </tr>
+                <tr>
+                  <td>union</td>
+                  <td>0..1</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+        <section anchor="sec-yang-ext-union">
+          <name>The <tt>union</tt> Statement (Type Union)</name>
+          <t>
+A <xref target="I-D.ietf-dtn-amm">Type Union</xref> semantic type is expressed using the native YANG "type" statement with the <tt>union</tt> type (see <xref section="7.4" target="RFC7950"/>).
+             </t>
+          <t>
+Each member <tt>type</tt> substatement defines one of the possible choices of the union.
+The order of the list of choices is significant, especially when converting ARI values, because the first choice which matches or converts will be used regardless of any other choices.
+             </t>
+          <table>
+            <name><tt>union</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th colspan="2">Ordered choice of semantic types:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:tblt</td>
+                <td>0..n</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..n</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "union" statement are below, some as simple use and some with a restricted member.
+             </t>
+          <sourcecode type="yang">
+ union {
+   type amm:int;
+   type amm:textstr;
+ }
+ union {
+   type amm:uint {
+     range "3..10";
+   }
+   type amm:textstr;
+ }
+ </sourcecode>
+          <t>
+An AMM type union that uses the <tt>NULL</tt> type to indicate an optional value is expressed with the corresponding <tt>amm:null</tt> member type, which wraps the <tt>empty</tt> base type and maps to <tt>NULL</tt> as defined in <xref target="sec-yang-types"/>; the <tt>null</tt> value denotes the absence of a value (see <xref target="sec-yang-proc-restrict"/>).
+             </t>
+        </section>
+        <section anchor="sec-yang-ext-seq">
+          <name>The <tt>amm:seq</tt> Statement</name>
+          <t>
+This statement creates a Sequence semantic type (see <xref section="3.3.7" target="I-D.ietf-dtn-amm"/>) for its parent statement.
+There is no argument to this statement.
+            </t>
+          <t>
+This statement is distinct from the "amm:ulist" statement, which types the AC container itself, while the "amm:seq" types a portion of elements within an AC.
+The "amm:seq" is not present as a top-level value type except for the special case of a greedy capturing parameter type.
+            </t>
+          <table>
+            <name><tt>amm:seq</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>min-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>max-elements</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>uses</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+          <t>
+Examples of the "seq" statement are below.
+            </t>
+          <sourcecode type="yang">
+amm:dlist {
+  type amm:textstr;
+  amm:seq {
+    type amm:uint;
+    min-elements 1;
+  }
+}
+</sourcecode>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-parameter">
+        <name>The <tt>amm:parameter</tt> Statement</name>
+        <t>
+This statement is used to define one formal parameter that apply to the parent object.
+The argument to this statement is an identifier for the parameter.
+All parameters <bcp14>SHALL</bcp14> have unique names within the same parent object.
+          </t>
+        <t>
+The substatements under this are one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> which defines the type of the parameter.
+When the "amm:seq" statement is used to type a formal parameter, it <bcp14>SHALL</bcp14> be the last parameter in the list and represents a greedy matching of that an all subsequent given parameters.
+          </t>
+        <table>
+          <name><tt>amm:parameter</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:default</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>uses</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:seq</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of the "parameter" statement is below, where there are three defined parameters two of which have default values.
+          </t>
+        <sourcecode type="yang">
+  amm:parameter first {
+    type amm:uint {
+      range "3..10";
+    }
+  }
+  amm:parameter second {
+    type amm:textstr;
+    amm:default "\"value\"";
+  }
+  amm:parameter third {
+    amm:ulist {
+      type amm:uint;
+    }
+    amm:default "/AC/(3,5,8)"
+  }
+</sourcecode>
+        <section anchor="sec-yang-ext-default">
+          <name>The <tt>amm:default</tt> Statement</name>
+          <t>
+This statement is used to define default parameter as an AMM value.
+The argument to this statement is the text form of the ARI for the default value.
+            </t>
+          <t>
+The default value is used in the Parameter Handling procedure (see <xref section="6.4" target="I-D.ietf-dtn-amm"/>) to normalize given parameters into actual parameters.
+            </t>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-typedef">
+        <name>The <tt>typedef</tt> Statement (TYPEDEF Object)</name>
+        <t>
+This statement is used to define a Semantic Type (TYPEDEF) object (see <xref section="3.4.2" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are a choice of a top-level semantic type (see <xref target="sec-yang-ext-semtype"/>) being named by the typedef.
+          </t>
+        <table>
+          <name><tt>typedef</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>uses (for semantic type)</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+Examples of the "typedef" statement are below, some as restriction and some as union.
+          </t>
+        <sourcecode type="yang">
+  typedef restricted-uint {
+    description
+      "Example restriction";
+    type amm:uint {
+      range "3..10";
+    }
+  }
+  typedef annotated-uint {
+    description
+      "Example units annotation";
+    type amm:uint;
+    units "meter";
+  }
+  typedef structured-ac {
+    description
+      "Example units on AC items";
+    amm:ulist {
+      amm:type "/aritype/real32";
+      amm:units "meter";
+      min-elements 3;
+      max-elements 10;
+    }
+  }
+</sourcecode>
+      </section>
+      <section anchor="sec-yang-ext-ident">
+        <name>The <tt>amm:ident</tt> Statement</name>
+        <t>
+This statement is used to define an Identity (IDENT) object (see <xref section="3.4.3" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, and any number of base IDENT objects from which this one is derived.
+          </t>
+        <table>
+          <name><tt>amm:ident</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:abstract</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:base</td>
+              <td>0..*</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters)</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of a multiple-base hierarchy of IDENT objects is below.
+          </t>
+        <sourcecode type="yang">
+  amm:ident base-a {
+    amm:abstract true;
+    description
+      "A base identity object.";
+  }
+  amm:ident base-b {
+    amm:abstract true;
+    description
+      "Another base identity object.";
+  }
+  amm:ident use-1 {
+    amm:base "./IDENT/base-a";
+    description
+      "An identity derived from base-a.";
+  }
+  amm:ident use-2 {
+    amm:base "./IDENT/use-1";
+    amm:base "./IDENT/base-b";
+    description
+      "An identity derived from base-a (via use-1) and base-b.";
+  }
+  amm:ident use-3 {
+    amm:base "./IDENT/base-b";
+    amm:parameter option {
+      type amm:int;
+    }
+    description
+      "An identity derived from base-b which includes a parameter.";
+  }
+</sourcecode>
+        <section anchor="sec-yang-ext-abstract">
+          <name>The <tt>amm:abstract</tt> Statement</name>
+          <t>
+This statement causes the parent <xref target="sec-yang-ext-ident">IDENT</xref> object to be explicitly marked as abstract or not, as defined in <xref section="3.4.3" target="I-D.ietf-dtn-amm"/>.
+The argument to this statement is a boolean ("true" or "false") value in accordance with <xref section="9.5" target="RFC7950"/>.
+If not present, the default marking of the IDENT object is not-abstract.
+          </t>
+          <t>
+There are no substatements within this statement.
+          </t>
+        </section>
+        <section anchor="sec-yang-ext-base">
+          <name>The <tt>amm:base</tt> Statement</name>
+          <t>
+This statement causes the parent <xref target="sec-yang-ext-ident">IDENT</xref> object to be derived from a referenced base object.
+The argument to this statement is the text form of the ARI referencing the required base object.
+          </t>
+          <t>
+Similar to YANG logic, in the AMM derivation of an <tt>IDENT</tt> from a base has the following properties.
+          </t>
+          <ul>
+            <li>It is irreflexive, which means that an identity is not derived from itself.</li>
+            <li>It is transitive, which means that if identity B is derived from A and C is derived from B, then C is also derived from A.</li>
+          </ul>
+          <t>
+There are no substatements within this statement.
+          </t>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-const">
+        <name>The <tt>amm:const</tt> Statement</name>
+        <t>
+This statement is used to define a Constant (CONST) object (see <xref section="3.4.5" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, and one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> that represents the produced value of the CONST.
+The <tt>amm:const</tt> statement <bcp14>SHALL</bcp14> contain a an <tt>amm:init-value</tt>, which is the constant represented by this object.
+          </t>
+        <table>
+          <name><tt>amm:const</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:init-value</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters and semantic type)</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of a simple-typed CONST is below.
+          </t>
+        <sourcecode type="yang">
+  amm:const pi32 {
+    amm:type "/aritype/real32";
+    amm:init-value "3.14159";
+    description
+      "A truncated value of Pi.";
+  }
+</sourcecode>
+        <t>
+Another example of a semantic-typed MAC-valued CONST (see <xref section="4.2.4" target="I-D.ietf-dtn-amm"/>) is below.
+          </t>
+        <sourcecode type="yang">
+  amm:const do_thing {
+    type amm-base:mac;
+    amm:init-value "/AC/(../CTRL/first,../CTRL/second(2))";
+    description
+      "Execute two controls in sequence.";
+  }
+</sourcecode>
+      </section>
+      <section anchor="sec-yang-ext-ctrl">
+        <name>The <tt>amm:ctrl</tt> Statement</name>
+        <t>
+This statement is used to define a Control (CTRL) object (see <xref section="3.4.6" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, and an optional execution result.
+If the <tt>amm:result</tt> substatement is present it <bcp14>SHALL</bcp14> be used to constrain Result Storage for the execution procedure (see <xref section="6.6" target="I-D.ietf-dtn-amm"/>).
+If the <tt>amm:result</tt> substatement is omitted the assumed result type <bcp14>SHALL</bcp14> be <tt>NULL</tt> with a default value of <tt>null</tt>.
+Regardless of the presence or type indicated by an <tt>amm:result</tt> substatement, the failure to execute any control always results in an <tt>undefined</tt> result value.
+          </t>
+        <table>
+          <name><tt>amm:ctrl</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:result</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters and result)</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of a single-parameter CTRL is below.
+          </t>
+        <sourcecode type="yang">
+  amm:ctrl reset_count {
+    amm:parameter src {
+      type amm:textstr;
+      description
+        "The name of the source.";
+    }
+    amm:result previous {
+      type amm:uvast;
+      description
+        "The value just before reset.";
+    }
+    description
+      "This control resets counts for the given source.";
+  }
+</sourcecode>
+        <section>
+          <name>The <tt>amm:result</tt> Statement</name>
+          <t>
+The result statement contains one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> which represents the result expected from executing a CTRL or evaluating an OPER.
+The argument to this statement is an identifier for the result.
+            </t>
+          <table>
+            <name><tt>amm:result</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>uses (for semantic type)</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:tblt</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-edd">
+        <name>The Config-False <tt>leaf</tt> Statement (EDD Object)</name>
+        <t>
+This statement, when combined with a "config false" substatement, is used to define an Externally Defined Data (EDD) object (see <xref section="3.4.4" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The <tt>leaf</tt> statement with a "config false" substatement is the native YANG representation of the EDD object type, and there is no separate EDD marker statement.
+The identifier of the <tt>leaf</tt> is the name of the EDD object instance, and in ARI syntax the EDD continues to be referenced by the <tt>EDD</tt> object type, as <tt>/EDD/&lt;name&gt;</tt>.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, and one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> that represents the produced value of the EDD.
+          </t>
+        <table>
+          <name><tt>leaf</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>config</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters and semantic type)</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of a simple-typed EDD is below.
+          </t>
+        <sourcecode type="yang">
+  leaf tx_count {
+    type amm-base:counter64;
+    units "frames";
+    description
+      "The count of the number of frames sent.";
+  }
+</sourcecode>
+      </section>
+      <section anchor="sec-yang-ext-oper">
+        <name>The <tt>amm:oper</tt> Statement</name>
+        <t>
+This statement is used to define an Operator (OPER) object (see <xref section="3.4.7" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, an operands list, and an evaluation result.
+          </t>
+        <table>
+          <name><tt>amm:oper</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:operand</td>
+              <td>0..*</td>
+            </tr>
+            <tr>
+              <td>result</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters, operands, and/or result)</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of an arithmetic OPER is below.
+          </t>
+        <sourcecode type="yang">
+  amm:oper add {
+    amm:operand val-a {
+      type amm-base:numeric;
+    }
+    amm:operand val-b {
+      type amm-base:numeric;
+    }
+    amm:result sum {
+      type amm-base:numeric;
+    }
+    description
+      "Sum together the two operands.";
+  }
+</sourcecode>
+        <t>
+A more complex "variadic" OPER with parameters is below.
+Also note the anonymous semantic type used to restrict the parameter.
+          </t>
+        <sourcecode type="yang">
+  amm:oper sum {
+    description
+      "Sum together a sequence from the stack.";
+    parameter count {
+      description
+        "The number of operands to pop."
+      type amm:uint {
+        range "1..max";
+      }
+    }
+    operand value {
+      description
+        "This is not within a container, so does not represent an AC;
+        it is multiple operands.";
+      type amm-base:numeric;
+    }
+    result sum {
+      type amm-base:numeric;
+    }
+  }
+</sourcecode>
+        <section>
+          <name>The <tt>amm:operand</tt> Statement</name>
+          <t>
+This statement is used to define one operand that applies to the parent object.
+The argument to this statement is an identifier for the operand.
+All operands <bcp14>SHALL</bcp14> have unique names within the same parent object.
+            </t>
+          <table>
+            <name><tt>amm:operand</tt> Substatements</name>
+            <thead>
+              <tr>
+                <th>Substatement</th>
+                <th>Cardinality</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>description</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>reference</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>uses (for semantic type)</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <th colspan="2">One of the semantic type:</th>
+              </tr>
+              <tr>
+                <td>type</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:ulist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:dlist</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:tblt</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>amm:umap</td>
+                <td>0..1</td>
+              </tr>
+              <tr>
+                <td>union</td>
+                <td>0..1</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-sbr">
+        <name>The <tt>amm:sbr</tt> Statement</name>
+        <t>
+This statement is used to define a State Based Rule object (see <xref section="3.4.8" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, the action to execute upon trigger, and rule control fields defined below.
+          </t>
+        <table>
+          <name><tt>amm:sbr</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:action</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:condition</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:min-interval</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:max-count</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:init-enabled</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of an SBR with some default fields is below.
+          </t>
+        <sourcecode type="yang">
+  amm:sbr enable_safe_mode {
+    description
+      "Enable safe mode below threshold.";
+    amm:action "/AC/(./CTRL/ensure_safe_mode(true))";
+    amm:condition "/AC/(./EDD/sensor,./VAR/min_threshold,"
+      +"/ietf-amm/OPER/compare_lt)";
+  }
+</sourcecode>
+        <section>
+          <name>The <tt>amm:min-interval</tt> Statement</name>
+          <t>
+This statement is used to define the Minimum Interval field of <xref target="sec-yang-ext-sbr">SBR</xref> objects.
+The argument to this statement is the text form of a <tt>TD</tt> value.
+If not present, the default value of zero (meaning no minimum) is used.
+            </t>
+        </section>
+        <section>
+          <name>The <tt>amm:max-count</tt> Statement</name>
+          <t>
+This statement is used to define the Maximum Count field of <xref target="sec-yang-ext-sbr">SBR</xref> and <xref target="sec-yang-ext-tbr">TBR</xref> objects.
+The argument to this statement is the text form of a <tt>UVAST</tt> value.
+If not present, the default value of zero (meaning no limit) is used.
+            </t>
+        </section>
+        <section>
+          <name>The <tt>amm:init-enabled</tt> Statement</name>
+          <t>
+This statement is used to define the Initial Enabled state of <xref target="sec-yang-ext-sbr">SBR</xref> and <xref target="sec-yang-ext-tbr">TBR</xref> objects.
+The argument to this statement is a boolean ("true" or "false") value in accordance with <xref section="9.5" target="RFC7950"/>.
+If not present, the default value of <tt>true</tt> is used.
+            </t>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-tbr">
+        <name>The <tt>amm:tbr</tt> Statement</name>
+        <t>
+This statement is used to define a Time-Based Rule (TBR) object (see <xref section="3.4.9" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, the action to execute upon trigger, and rule control fields defined below.
+          </t>
+        <table>
+          <name><tt>amm:tbr</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:action</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:start</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:period</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>amm:max-count</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:init-enabled</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of an TBR with some default fields is below.
+          </t>
+        <sourcecode type="yang">
+  amm:tbr tlm_rule {
+    description
+      "Generate telemetry reports.";
+    amm:action "/AC/(./CTRL/first,/adm2/CTRL/other)";
+    amm:period "/TD/PT30s";
+  }
+</sourcecode>
+        <section>
+          <name>The <tt>amm:start</tt> Statement</name>
+          <t>
+This statement is used to define the Start field of <xref target="sec-yang-ext-tbr">TBR</xref> objects.
+The argument to this statement is the text form of a <tt>TIME</tt> value (see <xref target="sec-yang-ietf-amm"/>).
+If not present, the default value of zero (meaning start immediately) is used.
+            </t>
+        </section>
+      </section>
+      <section anchor="sec-yang-ext-var">
+        <name>The <tt>amm:var</tt> Statement</name>
+        <t>
+This statement is used to define a Variable (VAR) object (see <xref section="3.4.10" target="I-D.ietf-dtn-amm"/>).
+The argument to this statement is the name of the object instance.
+          </t>
+        <t>
+The substatements under this are the common object metadata, optional formal parameters, one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> that represents the stored-and-produced value of the VAR, and an optional initializer expression.
+          </t>
+        <table>
+          <name><tt>amm:var</tt> Substatements</name>
+          <thead>
+            <tr>
+              <th>Substatement</th>
+              <th>Cardinality</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>if-feature</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:parameter</td>
+              <td>0..n</td>
+            </tr>
+            <tr>
+              <td>status</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>description</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>reference</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:init-value</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>uses (for parameters and semantic type)</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <th colspan="2">One of the semantic type:</th>
+            </tr>
+            <tr>
+              <td>type</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:ulist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:dlist</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:tblt</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>amm:umap</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
+              <td>union</td>
+              <td>0..1</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+An example of a simple-typed VAR with an initializer value is below.
+          </t>
+        <sourcecode type="yang">
+  amm:var min_threshold {
+    description
+      "The lower threshold to enable safe mode.";
+    amm:type "/aritype/real32" {
+      units "meter";
+    }
+    amm:init-value "1e4";
+  }
+</sourcecode>
+        <section>
+          <name>The <tt>amm:init-value</tt> Statement</name>
+          <t>
+This statement is used to define CONST values and VAR initial state as an AMM value.
+The argument to this statement is the text form of the ARI for the initial value.
+            </t>
+          <t>
+The initializer is used as part of the Agent Initialization procedure, (see <xref section="6.1" target="I-D.ietf-dtn-amm"/>) and when new VAR objects are defined in an ODM.
+          </t>
+        </section>
+      </section>
+    </section>
+    <section anchor="sec-auth-consid" title="ADM Author Considerations">
+      <t>
+All of the logical design considerations from <xref section="7" target="I-D.ietf-dtn-amm"/> apply to authors of ADM modules when considering the naming and behaviors of AMM object instances.
+      </t>
+      <t>
+All of the lifecycle considerations for YANG modules from <xref target="RFC8407"/> apply to those statements reused for ADM modules as defined in <xref target="sec-yang-proc-reuse"/>.
+Specifically the guidance from <xref section="4.17" target="RFC8407"/> regarding feature use and scoping.
+      </t>
+      <t>
+Although this specification allows semantic type statements to be included in a <tt>grouping</tt> statement, it is <bcp14>RECOMMENDED</bcp14> that ADM authors make use of named <xref target="sec-yang-ext-typedef">TYPEDEF</xref> object where possible.
+      </t>
+    </section>
+    <section anchor="sec-iana">
+      <name>IANA Considerations</name>
+      <t>
+        This section provides guidance to the Internet Assigned Numbers Authority (IANA) regarding registration of schema and namespaces related to core ADMs, in accordance with BCP 26 <xref target="RFC8126"/>.
+      </t>
+      <section>
+        <name>DTN Management Architecture</name>
+        <t>
+This document relies on existing ARI-defined registries defined in <xref target="IANA-DTNMA"/> by <xref section="9.3" target="I-D.ietf-dtn-ari"/>.
+        </t>
+        <t>
+This document defines the following entries within the "DTNMA IETF Data Models" registry of the "DTN Management Architecture" registry group <xref target="IANA-DTNMA"/>.
+All of the ADMs in this registry are under the "ietf" organization (enumeration 1).
+        </t>
+        <table anchor="tab-iana-dtnma-ietf-adms">
+          <name>DTNMA IETF Data Models</name>
+          <thead>
+            <tr>
+              <th>Enumeration</th>
+              <th>Name</th>
+              <th>Reference</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0</td>
+              <td>amm</td>
+              <td>[This document]</td>
+              <td>Definition of YANG extensions for the AMM itself.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>dtnma-agent</td>
+              <td>[This document]</td>
+              <td>DTNMA Agent introspection objects.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>dtnma-agent-acl</td>
+              <td>[This document]</td>
+              <td>DTNMA Agent access control.</td>
+            </tr>
+            <!--
+            <tr>
+              <td>4</td>
+              <td>inet-base</td>
+              <td>[This document]</td>
+              <td>Internet Protocol-related display-hints, data types, and endpoints.</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>bp-base</td>
+              <td>[This document]</td>
+              <td>Bundle Protocol-related display-hints, data types, and endpoints.</td>
+            </tr>
+             -->
+            <tr>
+              <td>24</td>
+              <td>amm-semtype</td>
+              <td>[This document]</td>
+              <td>AMM-defined semantic type representation.</td>
+            </tr>
+            <tr>
+              <td>25</td>
+              <td>amm-base</td>
+              <td>[This document]</td>
+              <td>AMM-defined type unions and other definitions.</td>
+            </tr>
+            <tr>
+              <td>26</td>
+              <td>network-base</td>
+              <td>[This document]</td>
+              <td>General purpose and abstract network-related objects.</td>
+            </tr>
+          </tbody>
+        </table>
+        <t>
+This document defines the following entries within the "DTNMA IANA Data Models" registry of the "DTN Management Architecture" registry group <xref target="IANA-DTNMA"/>.
+All of the ADMs in this registry are under the "iana" organization (enumeration 2).
+        </t>
+        <table anchor="tab-iana-dtnma-iana-adms">
+          <name>DTNMA IANA Data Models</name>
+          <thead>
+            <tr>
+              <th>Enumeration</th>
+              <th>Name</th>
+              <th>Reference</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0</td>
+              <td>display-hints</td>
+              <td>[This document]</td>
+              <td>Registry of well-known display hints.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+    <section anchor="Security" title="Security Considerations">
+      <t>
+This document defines a syntax for encoding DTNMA ADMs within a text file, and for interpreting extensions to the YANG language to support modeling of AMM objects and ARI values.
+It does not address what the contents of those ADMs are or any security considerations associated with the data models themselves.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references>
+      <name>References</name>
+      <references>
+        <name>Normative References</name>
+        <reference anchor="IANA-DTNMA" target="https://www.iana.org/assignments/TBA/">
+          <front>
+            <title>Delay-Tolerant Networking Management Architecture (DTNMA) Parameters</title>
+            <author>
+              <organization>IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7950.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.9485.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-dtn-amm.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-dtn-ari.xml"/>
+      </references>
+      <references>
+        <name>Informative References</name>
+        <reference anchor="IANA-YANG" target="https://www.iana.org/assignments/yang-parameters/">
+          <front>
+            <title>YANG Parameters</title>
+            <author>
+              <organization>IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="X.680" target="https://www.itu.int/rec/T-REC-X.680-201508-I/en">
+          <front>
+            <title>Information technology -- Abstract Syntax Notation One (ASN.1): Specification of basic notation</title>
+            <author>
+              <organization>ITU-T</organization>
+            </author>
+            <date month="August" year="2015"/>
+          </front>
+          <refcontent>ITU-T Recommendation X.680, ISO/IEC 8824-1:2015</refcontent>
+        </reference>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2578.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5280.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7942.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8126.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8407.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8610.xml"/>
+        <xi:include href="https://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.9675.xml"/>
+        <reference anchor="github-dtnma-ace" target="https://github.com/JHUAPL-DTNMA/dtnma-ace">
+          <front>
+            <title>The DTNMA AMM CODEC Engine (ACE)</title>
+            <author>
+              <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="github-dtnma-adms" target="https://github.com/JHUAPL-DTNMA/dtnma-adms">
+          <front>
+            <title>Application Data Models (ADMs)</title>
+            <author>
+              <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="github-dtnma-tools" target="https://github.com/JHUAPL-DTNMA/dtnma-tools">
+          <front>
+            <title>A reference implementation of the DTN Management Architecture (DTNMA) Agent and related Tools</title>
+            <author>
+              <organization abbrev="JHU/APL">The Johns Hopkins University Applied Physics Laboratory</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section anchor="sec-yang-ietf-amm">
+      <name>ADM Module for AMM Extensions</name>
+      <t>
+The ADM module in this section implements base extensions to YANG in support of the AMM.
+This includes the following:
+      </t>
+      <ul>
+        <li>Extensions to support ADM Metadata (see <xref section="4.1.1" target="I-D.ietf-dtn-amm"/>) within a YANG module.</li>
+        <li>Extensions to support AMM Object Types (see <xref section="3.4" target="I-D.ietf-dtn-amm"/>) within a YANG module.</li>
+        <li>Extensions to support Semantic Value Types (see <xref section="3.3" target="I-D.ietf-dtn-amm"/>) within a YANG module.</li>
+      </ul>
+      <sourcecode markers="true" name="ietf-amm.yang" src="modules/ietf-amm.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-ietf-amm-semtype">
+      <name>ADM Module for Semantic Type Introspection</name>
+      <t>
+The ADM module in this section implements the entities described in <xref section="4.2.2" target="I-D.ietf-dtn-amm"/>.
+This includes an IDENT object hierarchy which allows introspection of semantic types in ARI syntax.
+      </t>
+      <sourcecode markers="true" name="ietf-amm-semtype.yang" src="modules/ietf-amm-semtype.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-ietf-amm-base">
+      <name>ADM Module for AMM Semantic Types and Unions</name>
+      <t>
+The ADM module in this section implements base semantic types defined by the AMM.
+This includes the following:
+      </t>
+      <ul>
+        <li>Simple types described in <xref section="4.2.3" target="I-D.ietf-dtn-amm"/>.</li>
+        <li>Container types described in <xref section="4.2.4" target="I-D.ietf-dtn-amm"/>.</li>
+        <li>Union types described in <xref section="4.2.5" target="I-D.ietf-dtn-amm"/>.</li>
+      </ul>
+      <sourcecode markers="true" name="ietf-amm-base.yang" src="modules/ietf-amm-base.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-ietf-network-base">
+      <name>ADM Module for Base Networking Objects</name>
+      <t>
+The ADM module in this section implements IDENT objects and semantic types associated with abstract networking identifiers and endpoints.
+Specific networking technologies and protocols can derive from the abstract bases to implement concrete protocol-specific logic.
+      </t>
+      <sourcecode markers="true" name="ietf-network-base.yang" src="modules/ietf-network-base.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-displayhints">
+      <name>IANA Assignments for display-hint</name>
+      <t>
+The ADM module in this section defines display-hint-derived IDENT objects described in <xref section="3.3.1" target="I-D.ietf-dtn-amm"/> for specific representations.
+      </t>
+      <sourcecode markers="true" name="iana-display-hints.yang" src="modules/iana-display-hints.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-agentadm">
+      <name>ADM Module for DTNMA Agents</name>
+      <t>
+The ADM module in this section implements the entities described in <xref section="4.3" target="I-D.ietf-dtn-amm"/>.
+This includes the following:
+      </t>
+      <ul>
+        <li>Introspective access to the ADMs supported by the Agent.</li>
+        <li>Introspective access to the VARs in ODMs.</li>
+        <li>A feature and introspective access to rules in ODMs.</li>
+        <li>A report template used to announce presence of an Agent.</li>
+        <li>Base helper controls and arithmetic operators</li>
+      </ul>
+      <sourcecode markers="true" name="ietf-dtnma-agent.yang" src="modules/ietf-dtnma-agent.yang" type="yang"/>
+    </section>
+    <section anchor="sec-yang-acladm">
+      <name>ADM Module for DTNMA Agent Access Control Lists</name>
+      <t>
+The ADM module in this section implements the entities described in <xref section="A" target="I-D.ietf-dtn-amm"/>.
+    </t>
+      <sourcecode markers="true" name="ietf-dtnma-agent-acl.yang" src="modules/ietf-dtnma-agent-acl.yang" type="yang"/>
+    </section>
+    <section numbered="false" removeInRFC="true">
+      <name>Implementation Status</name>
+      <t>
+[NOTE to the RFC Editor: please remove this section before publication, as well as the reference to <xref target="RFC7942"/>, <xref target="github-dtnma-ace"/>, and <xref target="github-dtnma-adms"/>.]
+      </t>
+      <t>
+This section records the status of known implementations of the
+protocol defined by this specification at the time of posting of
+this Internet-Draft, and is based on a proposal described in
+<xref target="RFC7942"/>.
+The description of implementations in this section is
+intended to assist the IETF in its decision processes in progressing
+drafts to RFCs. Please note that the listing of any individual
+implementation here does not imply endorsement by the IETF.
+Furthermore, no effort has been spent to verify the information
+presented here that was supplied by IETF contributors. This is not
+intended as, and must not be construed to be, a catalog of available
+implementations or their features. Readers are advised to note that
+other implementations can exist.
+      </t>
+      <t>
+A full implementation in Python language of the ADM module encoding and decoding, and for translating between ARI text name and integer enumeration (based on ADM contents) is present in the source repository <xref target="github-dtnma-ace"/>.
+This repository includes unit test vectors for verifying ADM module encoding and decoding and is used as the basis of ADM syntax checking and formatting tools in the ADM modules in this document.
+      </t>
+      <t>
+The ADM modules present in Appendix A through D are version controlled in their original form in the repository <xref target="github-dtnma-adms"/>.
+      </t>
+      <t>
+An implementation of the models themselves is part of the C11 language REFDA library managed under the source repository <xref target="github-dtnma-tools"/>.
+This project has built-item (executable) testing which exercises the AMM-level interface of the REFDA through sending specific EXECSET values and observing subsequent RPTSET values as well as daemon log events.
+      </t>
+    </section>
+    <section numbered="false" toc="include">
+      <name>Acknowledgments</name>
+      <t>
+The following participants contributed technical material, use cases, and useful thoughts on the overall approach captured in this document: David Linko, Sarah Heiner, Jenny Cao, and Leonardo Babun of the Johns Hopkins University Applied Physics Laboratory (JHU/APL).
+      </t>
+    </section>
+  </back>
+</rfc>
