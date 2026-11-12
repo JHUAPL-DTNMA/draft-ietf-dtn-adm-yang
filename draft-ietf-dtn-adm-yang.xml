@@ -2002,6 +2002,7 @@ An example of a simple-typed EDD is below.
           </t>
         <sourcecode type="yang">
   leaf tx_count {
+    config false;
     type amm-base:counter64;
     units "frames";
     description
