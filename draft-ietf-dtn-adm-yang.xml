@@ -622,6 +622,7 @@ Each named type wraps the corresponding YANG base type (for example, <tt>uint32<
  When an AMM value is present in the syntax of a YANG module, it is present only as that text form, without the <tt>ari:</tt> scheme prefix but in many cases <em>with</em> its ARI literal type segment.
  For example, a <tt>REAL64</tt> value of 3.14 is written as the untyped literal <tt>3.14</tt>.
  A <tt>TP</tt> value is written as its RFC 3339 date-time or fractional-seconds text form (<em>e.g.</em>, <tt>/TP/20230102T030405Z</tt>), and a <tt>TD</tt> value as its RFC 3339 duration or fractional-seconds text form (<em>e.g.</em>, <tt>/TD/PT5S</tt>).
+ The <tt>OBJPAT</tt> pattern constrains an object reference: each of the four path segments of the reference (organization, model, object type, and object ID) is independently constrained to a wildcard, a single value, or a comma-separated set of integer intervals.
           </t>
       <t>
 The <tt>TD</tt> type represents a time delta (an offset between two time points), not an absolute point in time.
@@ -647,6 +648,26 @@ Because they are ADM objects, TYPEDEFs can be referenced by name when necessary,
 Except for the case of a simple "type" with no restrictions or annotations, anywhere one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> occurs in an object definition can be considered as an "anonymous" unnamed semantic type.
 The behavior in those cases is identical to a TYPEDEF just without a name associated with the semantic type.
          </t>
+      <section>
+        <name>Rationale for the Native YANG Type Mapping</name>
+        <t>
+The AMM built-in value types are a fixed set, and each has a deterministic encoding in CBOR within ARI syntax (<xref target="I-D.ietf-dtn-ari"/>).
+Therefore, each built-in value type can be mapped to a single native YANG base type, and the static typing of AMM values within an ADM is expressed with the native YANG type system of <xref target="RFC7950"/> rather than with a set of AMM-specific extension statements.
+Because the type arguments are module-qualified references to named types, ADM modules can be parsed and validated by standard YANG tooling as ordinary YANG modules, and the native type constraint substatements (such as <tt>range</tt>, <tt>length</tt>, and <tt>pattern</tt>) apply directly to AMM values.
+          </t>
+        <t>
+Two mapping rules are used.
+An AMM built-in value type that has a single corresponding YANG base type is a direct typedef of that base type (for example, <tt>UINT</tt> as <tt>uint32</tt>, <tt>TEXTSTR</tt> as <tt>string</tt>, and <tt>CBOR</tt> as <tt>binary</tt>).
+An AMM built-in value type without a single corresponding YANG base type is derived from <tt>string</tt> and holds the ARI text form of the value.
+          </t>
+        <t>
+The ARI text form is used for the types in <xref target="tab-amm-yang-types"/> that have no direct corresponding base type because <xref target="RFC7950"/> has no base type that directly represents a 32-bit or 64-bit IEEE 754 floating-point value, a DTN time point, or a DTN time delta, and the ARI text form is the representation of the value defined for ARI syntax (<xref target="I-D.ietf-dtn-ari"/>).
+Alternative native encodings were considered during the design of this mapping (for example, representing <tt>TP</tt> as an integer offset from the DTN epoch, and <tt>TD</tt> as a decimal nanosecond count or as a union of a string and a numeric type), but the ARI text form is retained so that the text form of a value within an ADM module is the same form used in ARI syntax.
+          </t>
+        <t>
+Where an AMM built-in value type has a registered ARI literal type code point (<xref target="I-D.ietf-dtn-ari"/>), the corresponding named type in the <tt>ietf-amm</tt> module carries that code point in an <tt>amm:enum</tt> substatement (<xref target="sec-yang-ext-enum"/>), consistent with the use of <tt>amm:enum</tt> in ADM modules to enable the compressed form of ARI.
+          </t>
+      </section>
     </section>
     <section anchor="sec-yang-ext">
       <name>ADM Module Extensions</name>
