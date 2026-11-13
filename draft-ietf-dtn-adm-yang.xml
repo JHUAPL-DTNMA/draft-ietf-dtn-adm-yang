@@ -682,7 +682,7 @@ The argument to this statement is a YANG type, which is a module-qualified <tt>&
              </t>
           <t>
 The substatements under this are the native YANG type substatements (see <xref section="7.4.1" target="RFC7950"/>), such as <tt>range</tt>, <tt>length</tt>, and <tt>pattern</tt>, together with the AMM type-annotation extension statements defined in this document.
-Because this is the native "type" statement, it does not carry the <tt>description</tt>, <tt>reference</tt>, or <tt>units</tt> statements; those are carried by the enclosing TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) or EDD object (<xref target="sec-yang-ext-edd"/>) when the semantic type is named.
+Because this is the native "type" statement, it does not carry the <tt>description</tt>, <tt>reference</tt>, or <tt>units</tt> statements; those are carried by the enclosing TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) or EDD object (<xref target="sec-yang-ext-edd"/>) when the semantic type is named, as shown in the examples below and in the <tt>annotated-uint</tt> and <tt>tx_count</tt> examples in those sections.
 For compatibility reasons, the arguments used for <tt>pattern</tt> statements <bcp14>SHALL</bcp14> be limited to the constructs compatible with I-Regexp of <xref target="RFC9485"/>.
              </t>
           <table>
@@ -695,24 +695,6 @@ For compatibility reasons, the arguments used for <tt>pattern</tt> statements <b
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th colspan="3">Inherited from base YANG</th>
-              </tr>
-              <tr>
-                <td>description</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
-              <tr>
-                <td>reference</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
-              <tr>
-                <td>units</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
               <tr>
                 <th colspan="3">Display annotations</th>
               </tr>
@@ -758,20 +740,25 @@ For compatibility reasons, the arguments used for <tt>pattern</tt> statements <b
           </table>
           <t>
 Examples of the "type" statement are below, some as simple use and some as restriction.
+The constrained types are shown within a named type to indicate where the associated <tt>description</tt>, <tt>reference</tt>, and <tt>units</tt> statements are carried.
              </t>
           <sourcecode type="yang">
  type amm:uint;
- type amm:uint {
-   description
-     "constrained number";
-   units "meter";
-   range "3..10";
- }
- type amm:textstr {
-   description
-     "constrained text size";
-   length "10..100";
- }
+  typedef constrained-uint {
+    description
+      "constrained number";
+    units "meter";
+    type amm:uint {
+      range "3..10";
+    }
+  }
+  typedef constrained-textstr {
+    description
+      "constrained text size";
+    type amm:textstr {
+      length "10..100";
+    }
+  }
  </sourcecode>
           <section anchor="sec-yang-ext-display-hint">
             <name>The <tt>amm:display-hint</tt> Statement</name>
@@ -1551,9 +1538,9 @@ Examples of the "typedef" statement are below, some as restriction and some as u
   typedef structured-ac {
     description
       "Example units on AC items";
+    units "meter";
     amm:ulist {
-      amm:type "/aritype/real32";
-      amm:units "meter";
+      type amm:real32;
       min-elements 3;
       max-elements 10;
     }
@@ -1764,7 +1751,7 @@ An example of a simple-typed CONST is below.
           </t>
         <sourcecode type="yang">
   amm:const pi32 {
-    amm:type "/aritype/real32";
+    type amm:real32;
     amm:init-value "3.14159";
     description
       "A truncated value of Pi.";
@@ -2092,20 +2079,20 @@ Also note the anonymous semantic type used to restrict the parameter.
   amm:oper sum {
     description
       "Sum together a sequence from the stack.";
-    parameter count {
+    amm:parameter count {
       description
         "The number of operands to pop."
       type amm:uint {
         range "1..max";
       }
     }
-    operand value {
+    amm:operand value {
       description
         "This is not within a container, so does not represent an AC;
         it is multiple operands.";
       type amm-base:numeric;
     }
-    result sum {
+    amm:result sum {
       type amm-base:numeric;
     }
   }
@@ -2432,9 +2419,7 @@ An example of a simple-typed VAR with an initializer value is below.
   amm:var min_threshold {
     description
       "The lower threshold to enable safe mode.";
-    amm:type "/aritype/real32" {
-      units "meter";
-    }
+    type amm:real32;
     amm:init-value "1e4";
   }
 </sourcecode>
