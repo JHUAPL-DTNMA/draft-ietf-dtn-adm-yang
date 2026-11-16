@@ -1275,16 +1275,16 @@ The order of the list of choices is significant, especially when converting ARI 
 Examples of the "union" statement are below, some as simple use and some with a restricted member.
              </t>
           <sourcecode type="yang">
- union {
-   type amm:int;
-   type amm:textstr;
- }
- union {
-   type amm:uint {
-     range "3..10";
-   }
-   type amm:textstr;
- }
+  type union {
+    type amm:int;
+    type amm:textstr;
+  }
+  type union {
+    type amm:uint {
+      range "3..10";
+    }
+    type amm:textstr;
+  }
  </sourcecode>
           <t>
 An AMM type union that uses the <tt>NULL</tt> type to indicate an optional value is expressed with the corresponding <tt>amm:null</tt> member type, which wraps the <tt>empty</tt> base type and maps to <tt>NULL</tt> as defined in <xref target="sec-yang-types"/>; the <tt>null</tt> value denotes the absence of a value (see <xref target="sec-yang-proc-restrict"/>).
@@ -1540,7 +1540,7 @@ The substatements under this are a choice of a top-level semantic type (see <xre
           </tbody>
         </table>
         <t>
-Examples of the "typedef" statement are below, some as restriction and some as union.
+Examples of the "typedef" statement are below, some as restriction and some with annotations.
           </t>
         <sourcecode type="yang">
   typedef restricted-uint {
