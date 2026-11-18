@@ -157,8 +157,12 @@ The AMM object types of <xref section="3.4" target="I-D.ietf-dtn-amm"/> are expr
             <td>native <tt>typedef</tt> statement</td>
           </tr>
           <tr>
+            <td>IDENT</td>
+            <td>native <tt>identity</tt> statement</td>
+          </tr>
+          <tr>
             <td>All other object types</td>
-            <td>AMM extension statement (<tt>amm:ident</tt>, <tt>amm:const</tt>, <tt>amm:ctrl</tt>, <tt>amm:oper</tt>, <tt>amm:sbr</tt>, <tt>amm:tbr</tt>, <tt>amm:var</tt>)</td>
+            <td>AMM extension statement (<tt>amm:const</tt>, <tt>amm:ctrl</tt>, <tt>amm:oper</tt>, <tt>amm:sbr</tt>, <tt>amm:tbr</tt>, <tt>amm:var</tt>)</td>
           </tr>
         </tbody>
       </table>
@@ -283,6 +287,13 @@ Later versions of YANG syntax could introduce incompatible changes and will need
             <td>0..n</td>
             <td>
               <xref target="sec-yang-ext-typedef"/>
+            </td>
+          </tr>
+          <tr>
+            <td>identity (IDENT object)</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-ident"/>
             </td>
           </tr>
           <tr>
@@ -1569,16 +1580,16 @@ Examples of the "typedef" statement are below, some as restriction and some with
 </sourcecode>
       </section>
       <section anchor="sec-yang-ext-ident">
-        <name>The <tt>amm:ident</tt> Statement</name>
+        <name>The <tt>identity</tt> Statement (IDENT Object)</name>
         <t>
 This statement is used to define an Identity (IDENT) object (see <xref section="3.4.3" target="I-D.ietf-dtn-amm"/>).
 The argument to this statement is the name of the object instance.
           </t>
         <t>
-The substatements under this are the common object metadata, optional formal parameters, and any number of base IDENT objects from which this one is derived.
+The substatements under this are the native <tt>identity</tt> metadata of <xref target="RFC7950"/>, including any number of base IDENT objects from which this one is derived, the AMM code point and abstract marking, and optional formal parameters.
           </t>
         <table>
-          <name><tt>amm:ident</tt> Substatements</name>
+          <name><tt>identity</tt> Substatements</name>
           <thead>
             <tr>
               <th>Substatement</th>
@@ -1591,12 +1602,8 @@ The substatements under this are the common object metadata, optional formal par
               <td>0..1</td>
             </tr>
             <tr>
-              <td>amm:enum</td>
-              <td>0..1</td>
-            </tr>
-            <tr>
-              <td>amm:parameter</td>
-              <td>0..n</td>
+              <td>base</td>
+              <td>0..*</td>
             </tr>
             <tr>
               <td>status</td>
@@ -1611,16 +1618,16 @@ The substatements under this are the common object metadata, optional formal par
               <td>0..1</td>
             </tr>
             <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
               <td>amm:abstract</td>
               <td>0..1</td>
             </tr>
             <tr>
-              <td>amm:base</td>
-              <td>0..*</td>
-            </tr>
-            <tr>
-              <td>uses (for parameters)</td>
-              <td>0..1</td>
+              <td>amm:parameter</td>
+              <td>0..n</td>
             </tr>
           </tbody>
         </table>
@@ -1628,34 +1635,34 @@ The substatements under this are the common object metadata, optional formal par
 An example of a multiple-base hierarchy of IDENT objects is below.
           </t>
         <sourcecode type="yang">
-  amm:ident base-a {
-    amm:abstract true;
+  identity base-a {
     description
       "A base identity object.";
-  }
-  amm:ident base-b {
     amm:abstract true;
+  }
+  identity base-b {
     description
       "Another base identity object.";
+    amm:abstract true;
   }
-  amm:ident use-1 {
-    amm:base "./IDENT/base-a";
+  identity use-1 {
+    base base-a;
     description
       "An identity derived from base-a.";
   }
-  amm:ident use-2 {
-    amm:base "./IDENT/use-1";
-    amm:base "./IDENT/base-b";
+  identity use-2 {
+    base use-1;
+    base base-b;
     description
       "An identity derived from base-a (via use-1) and base-b.";
   }
-  amm:ident use-3 {
-    amm:base "./IDENT/base-b";
+  identity use-3 {
+    base base-b;
+    description
+      "An identity derived from base-b which includes a parameter.";
     amm:parameter option {
       type amm:int;
     }
-    description
-      "An identity derived from base-b which includes a parameter.";
   }
 </sourcecode>
         <section anchor="sec-yang-ext-abstract">
@@ -1670,10 +1677,11 @@ There are no substatements within this statement.
           </t>
         </section>
         <section anchor="sec-yang-ext-base">
-          <name>The <tt>amm:base</tt> Statement</name>
+          <name>The <tt>base</tt> Statement (for IDENT objects)</name>
           <t>
 This statement causes the parent <xref target="sec-yang-ext-ident">IDENT</xref> object to be derived from a referenced base object.
-The argument to this statement is the text form of the ARI referencing the required base object.
+It is the native YANG <tt>base</tt> substatement (see <xref section="7.18.2" target="RFC7950"/>) of the <tt>identity</tt> definition, which constrains the identity to be derived from a particular base identity.
+The argument to this statement is the module-qualified <tt>&lt;prefix&gt;:&lt;name&gt;</tt> of the required base identity.
           </t>
           <t>
 Similar to YANG logic, in the AMM derivation of an <tt>IDENT</tt> from a base has the following properties.
