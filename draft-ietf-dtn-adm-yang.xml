@@ -157,8 +157,12 @@ The AMM object types of <xref section="3.4" target="I-D.ietf-dtn-amm"/> are expr
             <td>native <tt>typedef</tt> statement</td>
           </tr>
           <tr>
+            <td>IDENT</td>
+            <td>native <tt>identity</tt> statement</td>
+          </tr>
+          <tr>
             <td>All other object types</td>
-            <td>AMM extension statement (<tt>amm:ident</tt>, <tt>amm:const</tt>, <tt>amm:ctrl</tt>, <tt>amm:oper</tt>, <tt>amm:sbr</tt>, <tt>amm:tbr</tt>, <tt>amm:var</tt>)</td>
+            <td>AMM extension statement (<tt>amm:const</tt>, <tt>amm:ctrl</tt>, <tt>amm:oper</tt>, <tt>amm:sbr</tt>, <tt>amm:tbr</tt>, <tt>amm:var</tt>)</td>
           </tr>
         </tbody>
       </table>
@@ -283,6 +287,13 @@ Later versions of YANG syntax could introduce incompatible changes and will need
             <td>0..n</td>
             <td>
               <xref target="sec-yang-ext-typedef"/>
+            </td>
+          </tr>
+          <tr>
+            <td>identity (IDENT object)</td>
+            <td>0..n</td>
+            <td>
+              <xref target="sec-yang-ext-ident"/>
             </td>
           </tr>
           <tr>
@@ -622,6 +633,7 @@ Each named type wraps the corresponding YANG base type (for example, <tt>uint32<
  When an AMM value is present in the syntax of a YANG module, it is present only as that text form, without the <tt>ari:</tt> scheme prefix but in many cases <em>with</em> its ARI literal type segment.
  For example, a <tt>REAL64</tt> value of 3.14 is written as the untyped literal <tt>3.14</tt>.
  A <tt>TP</tt> value is written as its RFC 3339 date-time or fractional-seconds text form (<em>e.g.</em>, <tt>/TP/20230102T030405Z</tt>), and a <tt>TD</tt> value as its RFC 3339 duration or fractional-seconds text form (<em>e.g.</em>, <tt>/TD/PT5S</tt>).
+ The <tt>OBJPAT</tt> pattern constrains an object reference: each of the four path segments of the reference (organization, model, object type, and object ID) is independently constrained to a wildcard, a single value, or a comma-separated set of integer intervals.
           </t>
       <t>
 The <tt>TD</tt> type represents a time delta (an offset between two time points), not an absolute point in time.
@@ -647,6 +659,26 @@ Because they are ADM objects, TYPEDEFs can be referenced by name when necessary,
 Except for the case of a simple "type" with no restrictions or annotations, anywhere one of the <xref target="sec-yang-ext-semtype">semantic type statements</xref> occurs in an object definition can be considered as an "anonymous" unnamed semantic type.
 The behavior in those cases is identical to a TYPEDEF just without a name associated with the semantic type.
          </t>
+      <section>
+        <name>Rationale for the Native YANG Type Mapping</name>
+        <t>
+The AMM built-in value types are a fixed set, and each has a deterministic encoding in CBOR within ARI syntax (<xref target="I-D.ietf-dtn-ari"/>).
+Therefore, each built-in value type can be mapped to a single native YANG base type, and the static typing of AMM values within an ADM is expressed with the native YANG type system of <xref target="RFC7950"/> rather than with a set of AMM-specific extension statements.
+Because the type arguments are module-qualified references to named types, ADM modules can be parsed and validated by standard YANG tooling as ordinary YANG modules, and the native type constraint substatements (such as <tt>range</tt>, <tt>length</tt>, and <tt>pattern</tt>) apply directly to AMM values.
+          </t>
+        <t>
+Two mapping rules are used.
+An AMM built-in value type that has a single corresponding YANG base type is a direct typedef of that base type (for example, <tt>UINT</tt> as <tt>uint32</tt>, <tt>TEXTSTR</tt> as <tt>string</tt>, and <tt>CBOR</tt> as <tt>binary</tt>).
+An AMM built-in value type without a single corresponding YANG base type is derived from <tt>string</tt> and holds the ARI text form of the value.
+          </t>
+        <t>
+The ARI text form is used for the types in <xref target="tab-amm-yang-types"/> that have no direct corresponding base type because <xref target="RFC7950"/> has no base type that directly represents a 32-bit or 64-bit IEEE 754 floating-point value, a DTN time point, or a DTN time delta, and the ARI text form is the representation of the value defined for ARI syntax (<xref target="I-D.ietf-dtn-ari"/>).
+Alternative native encodings were considered during the design of this mapping (for example, representing <tt>TP</tt> as an integer offset from the DTN epoch, and <tt>TD</tt> as a decimal nanosecond count or as a union of a string and a numeric type), but the ARI text form is retained so that the text form of a value within an ADM module is the same form used in ARI syntax.
+          </t>
+        <t>
+Where an AMM built-in value type has a registered ARI literal type code point (<xref target="I-D.ietf-dtn-ari"/>), the corresponding named type in the <tt>ietf-amm</tt> module carries that code point in an <tt>amm:enum</tt> substatement (<xref target="sec-yang-ext-enum"/>), consistent with the use of <tt>amm:enum</tt> in ADM modules to enable the compressed form of ARI.
+          </t>
+      </section>
     </section>
     <section anchor="sec-yang-ext">
       <name>ADM Module Extensions</name>
@@ -682,7 +714,7 @@ The argument to this statement is a YANG type, which is a module-qualified <tt>&
              </t>
           <t>
 The substatements under this are the native YANG type substatements (see <xref section="7.4.1" target="RFC7950"/>), such as <tt>range</tt>, <tt>length</tt>, and <tt>pattern</tt>, together with the AMM type-annotation extension statements defined in this document.
-Because this is the native "type" statement, it does not carry the <tt>description</tt>, <tt>reference</tt>, or <tt>units</tt> statements; those are carried by the enclosing TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) or EDD object (<xref target="sec-yang-ext-edd"/>) when the semantic type is named.
+Because this is the native "type" statement, it does not carry the <tt>description</tt>, <tt>reference</tt>, or <tt>units</tt> statements; those are carried by the enclosing TYPEDEF object (<xref target="sec-yang-ext-typedef"/>) or EDD object (<xref target="sec-yang-ext-edd"/>) when the semantic type is named, as shown in the examples below and in the <tt>annotated-uint</tt> and <tt>tx_count</tt> examples in those sections.
 For compatibility reasons, the arguments used for <tt>pattern</tt> statements <bcp14>SHALL</bcp14> be limited to the constructs compatible with I-Regexp of <xref target="RFC9485"/>.
              </t>
           <table>
@@ -695,24 +727,6 @@ For compatibility reasons, the arguments used for <tt>pattern</tt> statements <b
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th colspan="3">Inherited from base YANG</th>
-              </tr>
-              <tr>
-                <td>description</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
-              <tr>
-                <td>reference</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
-              <tr>
-                <td>units</td>
-                <td>0..1</td>
-                <td>any</td>
-              </tr>
               <tr>
                 <th colspan="3">Display annotations</th>
               </tr>
@@ -758,20 +772,25 @@ For compatibility reasons, the arguments used for <tt>pattern</tt> statements <b
           </table>
           <t>
 Examples of the "type" statement are below, some as simple use and some as restriction.
+The constrained types are shown within a named type to indicate where the associated <tt>description</tt>, <tt>reference</tt>, and <tt>units</tt> statements are carried.
              </t>
           <sourcecode type="yang">
  type amm:uint;
- type amm:uint {
-   description
-     "constrained number";
-   units "meter";
-   range "3..10";
- }
- type amm:textstr {
-   description
-     "constrained text size";
-   length "10..100";
- }
+  typedef constrained-uint {
+    description
+      "constrained number";
+    units "meter";
+    type amm:uint {
+      range "3..10";
+    }
+  }
+  typedef constrained-textstr {
+    description
+      "constrained text size";
+    type amm:textstr {
+      length "10..100";
+    }
+  }
  </sourcecode>
           <section anchor="sec-yang-ext-display-hint">
             <name>The <tt>amm:display-hint</tt> Statement</name>
@@ -1267,16 +1286,16 @@ The order of the list of choices is significant, especially when converting ARI 
 Examples of the "union" statement are below, some as simple use and some with a restricted member.
              </t>
           <sourcecode type="yang">
- union {
-   type amm:int;
-   type amm:textstr;
- }
- union {
-   type amm:uint {
-     range "3..10";
-   }
-   type amm:textstr;
- }
+  type union {
+    type amm:int;
+    type amm:textstr;
+  }
+  type union {
+    type amm:uint {
+      range "3..10";
+    }
+    type amm:textstr;
+  }
  </sourcecode>
           <t>
 An AMM type union that uses the <tt>NULL</tt> type to indicate an optional value is expressed with the corresponding <tt>amm:null</tt> member type, which wraps the <tt>empty</tt> base type and maps to <tt>NULL</tt> as defined in <xref target="sec-yang-types"/>; the <tt>null</tt> value denotes the absence of a value (see <xref target="sec-yang-proc-restrict"/>).
@@ -1532,7 +1551,7 @@ The substatements under this are a choice of a top-level semantic type (see <xre
           </tbody>
         </table>
         <t>
-Examples of the "typedef" statement are below, some as restriction and some as union.
+Examples of the "typedef" statement are below, some as restriction and some with annotations.
           </t>
         <sourcecode type="yang">
   typedef restricted-uint {
@@ -1551,9 +1570,9 @@ Examples of the "typedef" statement are below, some as restriction and some as u
   typedef structured-ac {
     description
       "Example units on AC items";
+    units "meter";
     amm:ulist {
-      amm:type "/aritype/real32";
-      amm:units "meter";
+      type amm:real32;
       min-elements 3;
       max-elements 10;
     }
@@ -1561,16 +1580,16 @@ Examples of the "typedef" statement are below, some as restriction and some as u
 </sourcecode>
       </section>
       <section anchor="sec-yang-ext-ident">
-        <name>The <tt>amm:ident</tt> Statement</name>
+        <name>The <tt>identity</tt> Statement (IDENT Object)</name>
         <t>
 This statement is used to define an Identity (IDENT) object (see <xref section="3.4.3" target="I-D.ietf-dtn-amm"/>).
 The argument to this statement is the name of the object instance.
           </t>
         <t>
-The substatements under this are the common object metadata, optional formal parameters, and any number of base IDENT objects from which this one is derived.
+The substatements under this are the native <tt>identity</tt> metadata of <xref target="RFC7950"/>, including any number of base IDENT objects from which this one is derived, the AMM code point and abstract marking, and optional formal parameters.
           </t>
         <table>
-          <name><tt>amm:ident</tt> Substatements</name>
+          <name><tt>identity</tt> Substatements</name>
           <thead>
             <tr>
               <th>Substatement</th>
@@ -1583,12 +1602,8 @@ The substatements under this are the common object metadata, optional formal par
               <td>0..1</td>
             </tr>
             <tr>
-              <td>amm:enum</td>
-              <td>0..1</td>
-            </tr>
-            <tr>
-              <td>amm:parameter</td>
-              <td>0..n</td>
+              <td>base</td>
+              <td>0..*</td>
             </tr>
             <tr>
               <td>status</td>
@@ -1603,16 +1618,16 @@ The substatements under this are the common object metadata, optional formal par
               <td>0..1</td>
             </tr>
             <tr>
+              <td>amm:enum</td>
+              <td>0..1</td>
+            </tr>
+            <tr>
               <td>amm:abstract</td>
               <td>0..1</td>
             </tr>
             <tr>
-              <td>amm:base</td>
-              <td>0..*</td>
-            </tr>
-            <tr>
-              <td>uses (for parameters)</td>
-              <td>0..1</td>
+              <td>amm:parameter</td>
+              <td>0..n</td>
             </tr>
           </tbody>
         </table>
@@ -1620,34 +1635,34 @@ The substatements under this are the common object metadata, optional formal par
 An example of a multiple-base hierarchy of IDENT objects is below.
           </t>
         <sourcecode type="yang">
-  amm:ident base-a {
-    amm:abstract true;
+  identity base-a {
     description
       "A base identity object.";
-  }
-  amm:ident base-b {
     amm:abstract true;
+  }
+  identity base-b {
     description
       "Another base identity object.";
+    amm:abstract true;
   }
-  amm:ident use-1 {
-    amm:base "./IDENT/base-a";
+  identity use-1 {
+    base base-a;
     description
       "An identity derived from base-a.";
   }
-  amm:ident use-2 {
-    amm:base "./IDENT/use-1";
-    amm:base "./IDENT/base-b";
+  identity use-2 {
+    base use-1;
+    base base-b;
     description
       "An identity derived from base-a (via use-1) and base-b.";
   }
-  amm:ident use-3 {
-    amm:base "./IDENT/base-b";
+  identity use-3 {
+    base base-b;
+    description
+      "An identity derived from base-b which includes a parameter.";
     amm:parameter option {
       type amm:int;
     }
-    description
-      "An identity derived from base-b which includes a parameter.";
   }
 </sourcecode>
         <section anchor="sec-yang-ext-abstract">
@@ -1662,10 +1677,11 @@ There are no substatements within this statement.
           </t>
         </section>
         <section anchor="sec-yang-ext-base">
-          <name>The <tt>amm:base</tt> Statement</name>
+          <name>The <tt>base</tt> Statement (for IDENT objects)</name>
           <t>
 This statement causes the parent <xref target="sec-yang-ext-ident">IDENT</xref> object to be derived from a referenced base object.
-The argument to this statement is the text form of the ARI referencing the required base object.
+It is the native YANG <tt>base</tt> substatement (see <xref section="7.18.2" target="RFC7950"/>) of the <tt>identity</tt> definition, which constrains the identity to be derived from a particular base identity.
+The argument to this statement is the module-qualified <tt>&lt;prefix&gt;:&lt;name&gt;</tt> of the required base identity.
           </t>
           <t>
 Similar to YANG logic, in the AMM derivation of an <tt>IDENT</tt> from a base has the following properties.
@@ -1764,7 +1780,7 @@ An example of a simple-typed CONST is below.
           </t>
         <sourcecode type="yang">
   amm:const pi32 {
-    amm:type "/aritype/real32";
+    type amm:real32;
     amm:init-value "3.14159";
     description
       "A truncated value of Pi.";
@@ -2002,6 +2018,7 @@ An example of a simple-typed EDD is below.
           </t>
         <sourcecode type="yang">
   leaf tx_count {
+    config false;
     type amm-base:counter64;
     units "frames";
     description
@@ -2091,20 +2108,20 @@ Also note the anonymous semantic type used to restrict the parameter.
   amm:oper sum {
     description
       "Sum together a sequence from the stack.";
-    parameter count {
+    amm:parameter count {
       description
         "The number of operands to pop."
       type amm:uint {
         range "1..max";
       }
     }
-    operand value {
+    amm:operand value {
       description
         "This is not within a container, so does not represent an AC;
         it is multiple operands.";
       type amm-base:numeric;
     }
-    result sum {
+    amm:result sum {
       type amm-base:numeric;
     }
   }
@@ -2431,9 +2448,7 @@ An example of a simple-typed VAR with an initializer value is below.
   amm:var min_threshold {
     description
       "The lower threshold to enable safe mode.";
-    amm:type "/aritype/real32" {
-      units "meter";
-    }
+    type amm:real32;
     amm:init-value "1e4";
   }
 </sourcecode>
